@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo: Hello World (organizado)</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <script src="../utils/code/errors.js"></script>
+</head>
+<body>
+  <h1>Hello World (organizado)!</h1>
+  <p>Desenha um triângulo verde.</p>
+  <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+  <script type="shader/vertex">
+    #version 300 es
+
+    in vec2 position;
+
+    void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
+    }
+  </script>
+  <script type="shader/fragment">
+    #version 300 es
+
+    precision highp float;
+    out vec4 outColor;
+
+    void main() {
+        outColor = vec4(0.0, 1.0, 0.0, 1.0); // verde
+    }
+  </script>
+  <script type="module">
+    import { setupWebGL, initialize, render } from './main.js';
+    
+    const gl = setupWebGL();
+    initialize(gl);
+    render(gl);
+
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+
+  createSourceViewer([
+    { language: 'html', name: 'index.html', path: './index.html' },
+    { language: 'javascript', name: 'main.js', path: './main.js' },
+    { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' },
+    { language: 'glsl', name: 'vertex-shader', code: document.querySelector('[type="shader/vertex"]').textContent },
+    { language: 'glsl', name: 'fragment-shader', code: document.querySelector('[type="shader/fragment"]').textContent },
+  ]);
+</script>
