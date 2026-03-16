@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo: Escrevendo Texto com HTML</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <script src="../utils/code/errors.js"></script>
+  <style>
+    .canvas-container {
+      position: relative;
+    }
+
+    .text-overlay {
+      position: absolute;
+      inset: 0;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Escrevendo Texto com HTML</h1>
+    <p>
+      Usa elementos HTML sobrepostos ao canvas WebGL para 
+      escrever texto na tela.
+    </p>
+    <div class="canvas-container slices-children">
+        <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+        <div class="text-overlay">
+          <h2>Olá, mundo!</h2>
+          <p>
+            Este é um exemplo de como escrever texto usando elementos HTML
+            sobrepostos ao canvas WebGL.
+          </p>
+          <p>
+            Você pode usar qualquer tag HTML para formatar o texto, como
+            <strong>negrito</strong>, <em>itálico</em>, listas, links, etc.
+          </p>
+        </div>
+    </div>
+    <details>
+      <summary>Instruções</summary>
+      <div class="instructions">
+        <div class="input-controls">
+            <button id="show-slices">Mostrar "camadas"</button>
+        </div>
+        <p>
+          Tanto o &lt;canvas&gt; quanto a &lt;div&gt; que contém o texto ficam
+          sobrepostos (div em cima do canvas) e com o mesmo tamanho.
+          Assim, o texto parece estar "dentro" do canvas.
+        </p>
+        <p>
+          O legal é que dá para usar todo o poder do HTML e CSS para formatar
+          o texto, como mudar fontes, tamanhos, cores, adicionar links,
+          imagens, etc. O ruim é que não é possível que o texto faça parte
+          da cena 3D, ou seja, ele sempre ficará "em cima" do canvas.
+        </p>
+      </div>
+    </details>
+  </main>
+  <script id="entry" type="module">
+    import { setupWebGL, initialize, render } from './main.js';
+
+    const gl = setupWebGL();
+    await initialize(gl);
+
+    // ℹ️ neste exemplo, como não há animação, não precisamos de um
+    // game/mainLoop... apenas renderizamos uma vez ou quando o usuário
+    // escolher outra fonte
+    requestAnimationFrame(() => {
+      render(gl);
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+    .canvas-container {
+        &.slices-children {
+            perspective: 600px;
+
+            & > * {
+                transition: outline 200ms ease 0s,
+                    transform 1s ease 500ms,
+                    background-color 200ms ease 0s;
+                outline: 4px solid transparent;
+            
+                &:nth-child(1) { --ith: 0; }
+                &:nth-child(2) { --ith: 1; }
+                &:nth-child(3) { --ith: 2; }
+                &:nth-child(4) { --ith: 3; }
+                &:nth-child(5) { --ith: 4; }
+            }
+
+            &.slices-active > * {
+                outline-color: chocolate;
+                transform: translateX(-50%) 
+                  translateZ(calc(var(--ith) * (-5px) - 0px))
+                  rotateY(calc(var(--ith) * (-3deg) - 5deg))
+                  scaleX(calc(var(--ith) * (-0.03) + 1))
+                  translateX(50%);
+                background-color: #fff9;
+            }
+        }
+    }
+</style>
+
+
+
+<!-- ℹ️ necessário apenas para o exemplo, e não para uma aplicação real: -->
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+
+  createSourceViewer([
+    { language: 'html', name: 'index.html (trecho)', code: document.querySelector('#entry').outerHTML },
+    { language: 'javascript', name: 'main.js', path: './main.js' },
+    { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' }
+  ]);
+</script>
+
+<script>
+    const slicesBtn = document.querySelector('#show-slices')
+    const canvasContainer = document.querySelector('.canvas-container');
+    slicesBtn.addEventListener('click', () => {
+        const activated = canvasContainer.classList.toggle('slices-active');
+        slicesBtn.textContent = activated ? 'Esconder "camadas"' : 'Mostrar "camadas"';
+    });
+</script>

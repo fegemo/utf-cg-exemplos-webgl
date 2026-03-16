@@ -155,58 +155,70 @@ function resolvePath(path) {
 	return { target, prop };
 }
 
+// Generic updater: polls a read function and applies its result to the element.
+// - `readFn` should return the raw value to be applied each frame
+// - `applyFn` receives the raw value and should update the element accordingly
+// - `options.format` (optional) will be used to format the raw value before apply
+function bindStateUpdater(el, readFn, applyFn, options = {}) {
+	if (!el || typeof readFn !== 'function' || typeof applyFn !== 'function') return;
+	if (unbinders.has(el)) return;
+
+	const format = options.format ?? ((v) => (v == null ? '' : String(v)));
+
+	// initial apply
+	try {
+		const raw = readFn();
+		applyFn(format(raw), raw);
+	} catch (e) {
+		console.warn('[data-binding] Error evaluating readFn', e);
+	}
+
+	let rafId = null;
+	const tick = () => {
+		try {
+			const raw = readFn();
+			applyFn(format(raw), raw);
+		} catch (e) {
+			console.warn('[data-binding] Error evaluating readFn', e);
+		}
+		rafId = requestAnimationFrame(tick);
+	};
+	rafId = requestAnimationFrame(tick);
+
+	unbinders.set(el, () => cancelAnimationFrame(rafId));
+}
+
 // Usage: <span data-bind-text="state.t.toFixed(2)"></span>
 // Evaluates the JavaScript expression in the attribute value against registered
 // contexts (see `registerBindingContext`) and updates the element's innerText
 // reactively.
-function bindTextElement(el) {
+function bindElementText(el) {
 	const expr = el.getAttribute('data-bind-text');
 	if (!expr || unbinders.has(el)) return;
-	
-	// Build a function that evaluates the expression against registered contexts
+
 	const contextNames = Array.from(contexts.keys());
 	const contextValues = contextNames.map(name => contexts.get(name));
-	
+
 	let evalFn;
 	try {
-		// Create a function with context objects as parameters
 		evalFn = new Function(...contextNames, `return ${expr};`);
 	} catch (e) {
 		console.warn(`[data-binding] Invalid expression: ${expr}`, e);
 		return;
 	}
-	
-	// Update the element text by evaluating the expression
-	const updateText = () => {
-		try {
-			const result = evalFn(...contextValues);
-			el.innerText = result == null ? '' : String(result);
-		} catch (e) {
-			console.warn(`[data-binding] Error evaluating: ${expr}`, e);
-		}
-	};
-	
-	// Initial update
-	updateText();
-	
-	// Poll for changes using requestAnimationFrame
-	let rafId = null;
-	const tick = () => {
-		updateText();
-		rafId = requestAnimationFrame(tick);
-	};
-	rafId = requestAnimationFrame(tick);
-	
-	// Store unbind function
-	unbinders.set(el, () => cancelAnimationFrame(rafId));
+
+	const readFn = () => evalFn(...contextValues);
+	const formatter = pickFormatter(el);
+	const applyFn = (formatted /*, raw */) => { el.innerText = formatted; };
+
+	bindStateUpdater(el, readFn, applyFn, { format: formatter });
 }
 
 // Usage: <kbd data-bind-class="pressed:state.keys.ArrowUp active:state.t>0.5"></kbd>
 // The `data-bind-class` attribute accepts space-separated token pairs
 // `className:expression`. Each expression is evaluated against registered
 // contexts and the corresponding class is added/removed based on truthiness.
-function bindClassElement(el) {
-	// Parse token pairs from a single attribute: "className:expression class2:expr2"
+function bindElementClass(el) {
 	const attrValue = el.getAttribute('data-bind-class');
 	if (!attrValue || unbinders.has(el)) return;
 
@@ -237,34 +249,26 @@ function bindClassElement(el) {
 		}
 	});
 
-	const updateClasses = () => {
-		for (const { className, fn } of evalFns) {
-			if (!fn) continue;
-			try {
-				const res = fn(...contextValues);
-				if (res) el.classList.add(className); else el.classList.remove(className);
-			} catch (e) {
-				console.warn(`[data-binding] Error evaluating class: ${className}`, e);
-			}
+	const readFn = () => evalFns.map(({ fn }) => {
+		if (!fn) return false;
+		try { return Boolean(fn(...contextValues)); } catch (e) { console.warn('[data-binding] Error evaluating class expr', e); return false; }
+	});
+
+	const applyFn = (_formatted, rawArray) => {
+		for (let i = 0; i < evalFns.length; i++) {
+			const { className } = evalFns[i];
+			const truthy = rawArray[i];
+			if (truthy) el.classList.add(className); else el.classList.remove(className);
 		}
 	};
 
-	updateClasses();
-
-	let rafId = null;
-	const tick = () => {
-		updateClasses();
-		rafId = requestAnimationFrame(tick);
-	};
-	rafId = requestAnimationFrame(tick);
-
-	unbinders.set(el, () => cancelAnimationFrame(rafId));
+	bindStateUpdater(el, readFn, applyFn, { format: (v) => v });
 }
 
 // Usage: <input data-bind-value="state.t"> after calling
 // `registerBindingContext('state', appState)` from your module.
 // Binds an input element's value two-way with the object property.
-function bindElement(el) {
+function bindElementValue(el) {
 	const path = el.getAttribute('data-bind-value');
 	if (!path || unbinders.has(el)) return;
 	const resolved = resolvePath(path);
@@ -281,9 +285,9 @@ function bindElement(el) {
 }
 
 export function applyDeclarativeBindings() {
-	document.querySelectorAll('[data-bind-value]').forEach(bindElement);
-	document.querySelectorAll('[data-bind-text]').forEach(bindTextElement);
-	document.querySelectorAll('[data-bind-class]').forEach(bindClassElement);
+	document.querySelectorAll('[data-bind-value]').forEach(bindElementValue);
+	document.querySelectorAll('[data-bind-text]').forEach(bindElementText);
+	document.querySelectorAll('[data-bind-class]').forEach(bindElementClass);
 }
 
 export function registerBindingContext(name, obj) {

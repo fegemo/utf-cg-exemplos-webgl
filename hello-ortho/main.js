@@ -1,13 +1,5 @@
 import { createProgram, createShader } from '../utils/code/gl-utils.js';
 
-const state = {
-    colorBegin: [0.0, 1.0, 0.0], // verde  (array em js)
-    colorEnd:   [0.0, 0.0, 1.0], // azul   (array em js)
-    currentColor: null,          // Float32Array para enviar ao shader  
-    colorUniformLocation: null,  // localização do uniforme no shader
-    elapsedTime: 0,              // tempo acumulado para a animação
-}
-
 export function setupWebGL() {
     // inicializa o WebGL2
     const canvas = document.querySelector('.example-canvas');
@@ -56,41 +48,12 @@ export function initialize(gl) {
     gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(positionAttributeLocation);
 
-    // armazena a localização do uniforme de cor no estado e 
-    // inicializa com a cor inicial
-    state.colorUniformLocation = gl.getUniformLocation(program, 'currentColor');
-    state.currentColor = new Float32Array(state.colorBegin);
-    gl.uniform3fv(state.colorUniformLocation, state.currentColor);
-
     gl.clearColor(1.0, 1.0, 1.0, 1.0); // fundo branco
+    // --- fim do código de configuração ---
 }
 
 export function render(gl) {
     // renderiza: desenha o VAO que estava ativado: o do triângulo
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform3fv(state.colorUniformLocation, state.currentColor);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
-
-export function update(dt) {
-    // atualiza a cor atual com base no tempo
-    state.elapsedTime += dt;
-    const t = (Math.sin(state.elapsedTime) + 1) / 2; // varia entre 0 e 1
-    const currentColor = [
-        state.colorBegin[0] * (1 - t) + state.colorEnd[0] * t,
-        state.colorBegin[1] * (1 - t) + state.colorEnd[1] * t,
-        state.colorBegin[2] * (1 - t) + state.colorEnd[2] * t,
-    ];
-    state.currentColor = new Float32Array(currentColor);
-}
-
-
-
-
-
-
-
-
-
-
-export { state }

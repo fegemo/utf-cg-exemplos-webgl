@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo: Animação de Cor</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <script src="../utils/code/errors.js"></script>
+</head>
+<body>
+  <h1>Textura Simples</h1>
+  <p>Desenha um quadrilátero com uma textura, 
+    usando a imagem <code>pusheen-noodles.png</code>.
+  </p>
+  <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+  <script id="entry" type="module">
+    import { setupWebGL } from '../utils/code/gl-utils.js';
+    import { initialize, render, update } from './main.js';
+    
+    const gl = setupWebGL('.example-canvas');
+    
+    // ℹ️ aguarda (await) a inicialização para seguir adiante, garantindo 
+    // que a textura seja carregada antes de renderizar a cena
+    await initialize(gl, 'simple');
+
+    let lastTime = 0;
+    function mainLoop(currentTime) {
+      // (0) descobre o tempo decorrido desde o último frame (deltaTime)
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+    
+      // (1) atualiza o estado da aplicação (jogo, animação etc.)
+      update(deltaTime);
+
+      // (2) renderiza a cena sob o estado atual
+      render(gl);
+
+      // registra o próximo frame para ser executado o mais rápido possível
+      requestAnimationFrame(mainLoop);
+    }
+    requestAnimationFrame(mainLoop);
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+
+  createSourceViewer([
+    { language: 'javascript', name: 'main.js', path: './main.js' },
+    { language: 'glsl', name: 'simple.vertex.glsl', path: './simple.vertex.glsl' },
+    { language: 'glsl', name: 'simple.fragment.glsl', path: './simple.fragment.glsl' },
+    { language: 'html', name: 'index.html (trecho)', code: document.querySelector('#entry').outerHTML },
+    { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' },
+  ]);
+</script>

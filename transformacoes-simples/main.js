@@ -76,9 +76,9 @@ export function initialize(gl) {
     
     // configura o atributo 'position' ("in vec2 position" do shader) para 
     // receber os dados do buffer quando o programa (shaders) for executado
-    const positionAttributeLocation = gl.getAttribLocation(program, 'position');
-    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(positionAttributeLocation);
+    // const positionAttributeLocation = gl.getAttribLocation(program, 'position');
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(0);
 
     // armazena a localização do uniforme de transformação no estado
     state.transformLocation = gl.getUniformLocation(program, 'transform'); 

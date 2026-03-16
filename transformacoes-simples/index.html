@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo: Transformações Simples</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <script src="../utils/code/errors.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Transformações Simples</h1>
+    <p>
+      Desenha objetos transformados ilustrando translação, rotação e escala.
+    </p>
+    <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+    <details>
+      <summary>Instruções</summary>
+      <div class="instructions">
+        <p>
+          Há três quadrados desenhados na tela, que são transformados com (a) 
+          escala(2), (b) rotação(2π) e (c) translação(0, 0.5). O parâmetro t controla o
+          grau dessas transformações: quando t = 0, nenhuma transformação é
+          aplicada; quando t = 1, a transformação é aplicada em sua totalidade. 
+        </p>
+        <div class="input-controls">
+          <label for="input-t">Parâmetro t:</label>
+          <span>
+            <input type="range" id="input-t" min="0" max="1" step="0.01" value="0"
+              data-bind-value="state.t">
+            <span data-bind-text="state.t.toFixed(2)"></span>
+          </span>
+        </div>
+        <dl class="controls-instructions">
+          <dt><kbd data-bind-class="pressed:state.keys.ArrowUp">↑</kbd></dt>
+          <dd>Aumenta o parâmetro t</dd>
+          <dt><kbd data-bind-class="pressed:state.keys.ArrowDown">↓</kbd></dt>
+          <dd>Diminui o parâmetro t</dd>
+          <dt><kbd data-bind-class="pressed:state.autoIncrementT">Space</kbd></dt>
+          <dd>Ativa/desativa incremento automático de t</dd>
+        </dl>
+      </div>
+    </details>
+  </main>
+  <script type="shader/vertex">
+    #version 300 es
+
+    layout(location = 0)
+    in vec2 position;
+    //ℹ️ a uniform contendo a matriz de transformação
+    uniform mat3 transform;
+
+    void main() {
+        //ℹ️ aplica a transformação ao vértice, achando suas novas coordenadas
+        vec3 newPosition = transform * vec3(position, 1.0);
+        gl_Position = vec4(newPosition, 1.0);
+    }
+  </script>
+  <script type="shader/fragment">
+    #version 300 es
+
+    precision highp float;
+
+    out vec4 outColor;
+
+    void main() {
+        outColor = vec4(1.0, 0.0, 0.0, 1.0); // cor vermelha fixa
+    }
+  </script>
+  <script id="entry" type="module">
+    import { setupWebGL, initialize, render, update } from './main.js';
+
+    const gl = setupWebGL();
+    initialize(gl);
+
+    let lastTime = 0;
+    function mainLoop(currentTime) {
+      // (0) descobre o tempo decorrido desde o último frame (deltaTime)
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+    
+      // (1) atualiza o estado da aplicação (jogo, animação etc.)
+      update(deltaTime);
+
+      // (2) renderiza a cena sob o estado atual
+      render(gl);
+
+      // registra o próximo frame para ser executado o mais rápido possível
+      requestAnimationFrame(mainLoop);
+    }
+    requestAnimationFrame(mainLoop);
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ℹ️ necessário apenas para o exemplo, e não para uma aplicação real: -->
+<!-- conecta a interface de controle (html) com o state da aplicação (js) -->
+<script type="module">
+    import { registerBindingContext } from '../utils/code/data-binding.js';
+    import { state as appState } from './main.js';
+    registerBindingContext('state', appState);
+</script>
+
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+
+  createSourceViewer([
+    { language: 'html', name: 'index.html (trecho)', code: document.querySelector('#entry').outerHTML },
+    { language: 'javascript', name: 'main.js', path: './main.js' },
+    { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' },
+    { language: 'glsl', name: 'vertex-shader', code: document.querySelector('[type="shader/vertex"]').textContent },
+    { language: 'glsl', name: 'fragment-shader', code: document.querySelector('[type="shader/fragment"]').textContent },
+  ]);
+</script>

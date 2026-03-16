@@ -118,6 +118,7 @@ function ensureOpenerButton() {
     const lastSources = window.__sv_last_sources || [];
     const lastOptions = window.__sv_last_options || {};
     btn.style.display = 'none';
+    localStorage.setItem('sv-opened-before', 'true');
     // recreate viewer with last known sources/options
     createSourceViewer(lastSources, lastOptions).catch(() => {});
   });
@@ -155,6 +156,7 @@ function ensureContainer() {
 }
 
 export default async function createSourceViewer(sources = [], options = {}) {
+  const wasOpenBefore = localStorage.getItem('sv-opened-before') || 'true';
   // remember last used sources/options for the opener button
   window.__sv_last_sources = sources;
   window.__sv_last_options = options;
@@ -171,7 +173,7 @@ export default async function createSourceViewer(sources = [], options = {}) {
 
   // ensure opener exists and hide it while viewer is visible
   const opener = ensureOpenerButton();
-  if (opener) opener.style.display = 'none';
+  if (opener && wasOpenBefore === 'true') opener.style.display = 'none';
 
   const header = document.createElement('div');
   header.className = 'sv-header';
@@ -189,6 +191,7 @@ export default async function createSourceViewer(sources = [], options = {}) {
   closeBtn.addEventListener('click', () => {
     // animate closed, then remove
     container.classList.add('sv-closed');
+    localStorage.setItem('sv-opened-before', 'false');
     const onEnd = (e) => {
       if (e.propertyName !== 'transform') return;
       container.removeEventListener('transitionend', onEnd);
@@ -213,10 +216,12 @@ export default async function createSourceViewer(sources = [], options = {}) {
   container.appendChild(header);
   container.appendChild(content);
 
-  // trigger open animation on next frame
-  requestAnimationFrame(() => {
-    container.classList.remove('sv-closed');
-  });
+  if (wasOpenBefore === 'true') {
+    // trigger open animation on next frame
+    requestAnimationFrame(() => {
+      container.classList.remove('sv-closed');
+    });
+  }
 
   // load all sources (fetch if necessary)
   const loaded = await Promise.all(sources.map(async (s) => {

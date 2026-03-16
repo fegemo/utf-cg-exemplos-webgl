@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo: Escrevendo Texto com um Atlas</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <script src="../utils/code/errors.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Escrevendo Texto com um Atlas</h1>
+    <p>
+      Usa a biblioteca <a href="https://github.com/mate-h/webgl-fonts" target="_blank">WebGL-fonts</a> para escrever texto na tela
+      usando glifos em um atlas renderizados com WebGL.
+    </p>
+    <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+    <details>
+      <summary>Instruções</summary>
+      <div class="instructions">
+        <div class="input-controls">
+          <label for="input-font">Fonte usada:</label>
+          <select id="input-font">
+            <option value="../utils/sdf-fonts/roboto">Roboto</option>
+            <option value="../utils/sdf-fonts/ubuntu">Ubuntu</option>
+            <option value="../utils/sdf-fonts/dejavu-serif">DejaVu Serif</option>
+          </select>
+        </div>
+        <p>
+          Escolha a fonte usada para renderizar o texto. A biblioteca 
+          WebGL-fonts usa Signed Distance Fields (SDF) para desenhar os glifos
+          de forma eficiente. 
+        </p>
+        <p>
+          Para cada fonte, ela requer um arquivo .png (o atlas de glifos) e um arquivo .json
+          (com as métricas dos glifos). Para transformar um arquivo .ttf
+          (TrueType Font) nos arquivos .png e .json esperados pela
+          biblioteca, você pode usar a ferramenta 
+          <a href="https://github.com/astiopin/sdf_atlas" target="_blank">sdf_atlas</a>.
+        </p>
+      </div>
+    </details>
+  </main>
+  <script id="entry" type="module">
+    import { setupWebGL, initialize, render, setFont } from './main.js';
+
+    const gl = setupWebGL();
+    await initialize(gl);
+
+    // ℹ️ neste exemplo, como não há animação, não precisamos de um
+    // game/mainLoop... apenas renderizamos uma vez ou quando o usuário
+    // escolher outra fonte
+    requestAnimationFrame(() => {
+      render(gl);
+    });
+
+    // ℹ️ registra evento que permite trocar a fonte usada
+    const fontSelect = document.getElementById('input-font');
+    fontSelect.addEventListener('change', async (e) => {
+      const fontPath = e.target.value;
+
+      // chama a função setFont(gl, caminho) exportada do main.js
+      await setFont(gl, fontPath);
+      
+      // re-renderiza a cena com a nova fonte
+      requestAnimationFrame(() => {
+        render(gl);
+      });
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ℹ️ necessário apenas para o exemplo, e não para uma aplicação real: -->
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+
+  createSourceViewer([
+    { language: 'html', name: 'index.html (trecho)', code: document.querySelector('#entry').outerHTML },
+    { language: 'javascript', name: 'main.js', path: './main.js' },
+    { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' }
+  ]);
+</script>

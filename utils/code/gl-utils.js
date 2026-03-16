@@ -33,3 +33,27 @@ export const createProgram = (gl, vertexShader, fragmentShader) => {
   throw new Error('Falha na linkedição do programa: ' + infoLog);
 };
 
+export const createProgramFromFiles = async (gl, vertexPath, fragmentPath) => {
+  const [vsSource, fsSource] = await Promise.all([
+    fetch(vertexPath).then(res => res.text()),
+    fetch(fragmentPath).then(res => res.text())
+  ]);
+
+  const vertexShader = createShader(gl, 'vs', gl.VERTEX_SHADER,  vsSource);
+  const fragmentShader = createShader(gl, 'fs', gl.FRAGMENT_SHADER, fsSource);
+  
+  return createProgram(gl, vertexShader, fragmentShader);
+};
+
+export function setupWebGL(selector) {
+    // inicializa o WebGL2
+    const canvas = document.querySelector(selector);
+    const gl = canvas.getContext('webgl2');
+    
+    if (!gl) {
+      console.error('WebGL2 não está disponível');
+      throw new Error('WebGL2 não suportado');
+    }
+
+    return gl
+}

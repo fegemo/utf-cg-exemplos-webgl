@@ -3,69 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exemplo: Transformações Simples</title>
+  <title>Exemplo: Rotação Simples</title>
   <link rel="stylesheet" href="../utils/styling/example.css">
-  <script src="../utils/code/errors.js"></script>
 </head>
 <body>
   <main>
-    <h1>Transformações Simples</h1>
-    <p>
-      Desenha objetos transformados ilustrando translação, rotação e escala.
-    </p>
+    <h1>Rotação Simples</h1>
+    <p>Um único quadrado rotacionando no centro da tela.</p>
     <canvas class="example-canvas shadow" width="500" height="500"></canvas>
     <details>
-      <summary>Instruções</summary>
+      <summary>
+        Instruções
+      </summary>
       <div class="instructions">
-        <p>
-          Há três quadrados desenhados na tela, que são transformados com (a) 
-          escala(2), (b) rotação(2π) e (c) translação(0, 0.5). O parâmetro t controla o
-          grau dessas transformações: quando t = 0, nenhuma transformação é
-          aplicada; quando t = 1, a transformação é aplicada em sua totalidade. 
-        </p>
+        <p>A cada quadro de atualização (i.e., <code>update(dt)</code>), 
+          calcula um novo ângulo de rotação de acordo com a velocidade.</p>
         <div class="input-controls">
-          <label for="input-t">Parâmetro t:</label>
-          <span>
-            <input type="range" id="input-t" min="0" max="1" step="0.01" value="0"
-              data-bind-value="state.t">
-            <span data-bind-text="state.t.toFixed(2)"></span>
-          </span>
+          <div class="input-control-group">
+            <label for="progress-angle">Ângulo:</label>
+            <span>
+              <progress max="6.283185307" value="0" data-bind-value="state.angle"></progress>
+              <span data-bind-text="state.angle" data-bind-format="floatToDegree"></span>
+            </span>
+          </div>
+          <div class="input-control-group">
+            <label for="input-speed">Velocidade:</label>
+            <span>
+              <input type="range" id="input-speed" min="-12.566370616" max="12.566370616" step="0.01" value="0"
+                data-bind-value="state.speed">
+              <span data-bind-text="state.speed" data-bind-format="floatToPi"></span>
+            </span>
+          </div>
         </div>
-        <dl class="controls-instructions">
-          <dt><kbd data-bind-class="pressed:state.keys.ArrowUp">↑</kbd></dt>
-          <dd>Aumenta o parâmetro t</dd>
-          <dt><kbd data-bind-class="pressed:state.keys.ArrowDown">↓</kbd></dt>
-          <dd>Diminui o parâmetro t</dd>
-          <dt><kbd data-bind-class="pressed:state.autoIncrementT">Space</kbd></dt>
-          <dd>Ativa/desativa incremento automático de t</dd>
-        </dl>
       </div>
     </details>
   </main>
+
   <script type="shader/vertex">
     #version 300 es
 
     in vec2 position;
-    //ℹ️ a uniform contendo a matriz de transformação
+
+    // ℹ️ uma uniform mat3 contendo a rotação
     uniform mat3 transform;
 
     void main() {
-        //ℹ️ aplica a transformação ao vértice, achando suas novas coordenadas
+        // ℹ️ a posição é multiplicada pela rotação
         vec3 newPosition = transform * vec3(position, 1.0);
         gl_Position = vec4(newPosition, 1.0);
     }
   </script>
+
   <script type="shader/fragment">
     #version 300 es
-
     precision highp float;
-
     out vec4 outColor;
-
     void main() {
-        outColor = vec4(1.0, 0.0, 0.0, 1.0); // cor vermelha fixa
+      outColor = vec4(0.0, 0.5, 1.0, 1.0);
     }
   </script>
+
   <script id="entry" type="module">
     import { setupWebGL, initialize, render, update } from './main.js';
 
@@ -74,17 +71,10 @@
 
     let lastTime = 0;
     function mainLoop(currentTime) {
-      // (0) descobre o tempo decorrido desde o último frame (deltaTime)
       const deltaTime = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
-    
-      // (1) atualiza o estado da aplicação (jogo, animação etc.)
       update(deltaTime);
-
-      // (2) renderiza a cena sob o estado atual
       render(gl);
-
-      // registra o próximo frame para ser executado o mais rápido possível
       requestAnimationFrame(mainLoop);
     }
     requestAnimationFrame(mainLoop);
@@ -110,14 +100,23 @@
 
 
 
-
-
-
 <!-- ℹ️ necessário apenas para o exemplo, e não para uma aplicação real: -->
 <!-- conecta a interface de controle (html) com o state da aplicação (js) -->
 <script type="module">
     import { registerBindingContext } from '../utils/code/data-binding.js';
     import { state as appState } from './main.js';
+
+    window.floatToPi = (v) => {
+      const fractionOfPi = v / Math.PI;
+      const howManyTurns = v / (2 * Math.PI);
+      return `${fractionOfPi.toFixed(2)}π/s (${howManyTurns.toFixed(2)} voltas/s)`;
+    };
+
+    window.floatToDegree = (v) => {
+      const degrees = v * (180 / Math.PI);
+      return `${degrees.toFixed(0)}°`;
+    };
+
     registerBindingContext('state', appState);
 </script>
 
