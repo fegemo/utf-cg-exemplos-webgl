@@ -71,10 +71,10 @@ main {
     aspect-ratio: 1 / 1;
     max-width: var(--canvas-fixed-size);
     background-color: var(--error-color);
+}
 
-    &.shadow {
-        box-shadow: 4px 4px 2px #0001;
-    }
+.shadow {
+    box-shadow: 4px 4px 2px #0001;
 }
 
 .controls-instructions {

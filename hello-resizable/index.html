@@ -5,15 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exemplo: Hello World (organizado)</title>
   <link rel="stylesheet" href="../utils/styling/example.css">
-  <link rel="stylesheet" href="../hello-resizable/resizable-canvas.css">
+  <link rel="stylesheet" href="resizable-canvas.css">
   <script src="../utils/code/errors.js"></script>
 </head>
 <body>
-  <h1>Hello World (com projeção ortográfica)!</h1>
-  <p>Desenha um quadrado preto no espaço x, y ∈ [0, 100].</p>
-  <!-- <canvas class="example-canvas shadow" width="500" height="250"></canvas> -->
-  <!-- Descomente abaixo e comente acima para canvas redimensionável: -->
-  
+  <h1>Hello World (redimensionável)!</h1>
+  <p>Desenha um quadrado preto no espaço x, y ∈ [0, 100] (ou menor).</p>
   <div class="resizable-container shadow">
     <canvas class="example-canvas" width="500" height="500"></canvas>
   </div>
@@ -42,7 +39,6 @@
   </script>
   <script type="module">
     import { setupWebGL, initialize, render } from './main.js'
-    import { ortho } from '../utils/code/math-utils.js'
 
     const gl = setupWebGL()
     initialize(gl)

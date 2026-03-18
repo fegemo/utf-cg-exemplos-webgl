@@ -1,0 +1,17 @@
+.resizable-container {
+    resize: both;
+    overflow: hidden;
+    width: 500px;
+    height: 500px;
+
+    .example-canvas {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+    }
+}
+
+.example-canvas {
+    aspect-ratio: unset;
+}

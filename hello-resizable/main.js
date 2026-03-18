@@ -50,25 +50,40 @@ export function initialize(gl) {
     gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(positionAttributeLocation);
 
-    // ℹ️ encontra a localização da variável 'projection' do shader e 
-    // define a matriz de projeção ortográfica
-    const projectionUniformLocation = gl.getUniformLocation(program, 'projection');
-    const projectionMatrix = new Float32Array([ // ℹ️ repare: column-major order
-        0.02, 0.0,  0.0, 0.0, // left: 0, right: 100
-        0.0, 0.02,  0.0, 0.0, // bottom: 0, top: 100
-        0.0,  0.0, -1.0, 0.0, // near: -1, far: 1
-       -1.0, -1.0,  0.0, 1.0
-    ]);
-    // const projectionMatrix = ortho(0, 100, 0, 100, -1, 1);
-    // ⬆️ há uma função auxiliar lá embaixo e também em ../utils/code/math-utils.js
-
-    gl.uniformMatrix4fv(projectionUniformLocation, false, projectionMatrix);
-    // ⬆️ define o valor da uniform 'projection' do shader para a matriz 
-    // de projeção ortográfica que criamos
+    // ℹ️ configura os "limites do mundo" (projeção) e registra para reconfigurar
+    // sempre que o canvas for redimensionado
+    const projectionUniformLocation = gl.getUniformLocation(program, 'projection')
+    configureResizableWorld(gl, projectionUniformLocation)
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0); // fundo branco
-    // --- fim do código de configuração ---
 }
+
+function configureResizableWorld(gl, projectionUniformLocation) {
+    const resizableContainer = gl.canvas.closest('.resizable-container')
+    
+    // ℹ️ cria um observador do tamanho do canvas
+    const resizeObserver = new ResizeObserver(([entry, ...others]) => {
+      const { width, height } = entry.contentRect
+
+      // ℹ️ define o sistema da janela de visualização para cobrir todo o canvas
+      // e redesenha
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+      // ℹ️ calcula a matriz de projeção ortográfica considerando
+      // a proporção de largura/altura do canvas para evitar distorção
+      // da imagem (achatada ou alongada)
+      const aspectRatio = width / height
+      const projectionMatrix = ortho(0, 100, 0, 100/aspectRatio, -1, 1)
+      
+      // ℹ️ envia a matriz de projeção para o shader (GPU) para que seja usada,
+      // daí redesenha no novo estado
+      gl.uniformMatrix4fv(projectionUniformLocation, false, projectionMatrix)
+      render(gl)
+    })
+
+    resizeObserver.observe(resizableContainer)
+}
+
+
 
 export function render(gl) {
     // renderiza: desenha o VAO que estava ativado: o do quadrado
