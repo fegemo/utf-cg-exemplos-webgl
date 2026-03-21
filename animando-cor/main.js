@@ -1,11 +1,13 @@
+import { getDeclaredUniforms } from '../utils/code/debug-utils.js';
 import { createProgram, createShader } from '../utils/code/gl-utils.js';
+import { ortho } from '../utils/code/math-utils.js';
 
 const state = {
-    colorBegin: [0.0, 1.0, 0.0], // verde  (array em js)
-    colorEnd:   [0.0, 0.0, 1.0], // azul   (array em js)
-    currentColor: null,          // Float32Array para enviar ao shader  
-    colorUniformLocation: null,  // localização do uniforme no shader
-    elapsedTime: 0,              // tempo acumulado para a animação
+    colorBegin: [0.0, 1.0, 0.0],        // verde  (array em js)
+    colorEnd:   [0.0, 0.0, 1.0],        // azul   (array em js)
+    currentColor: null,                 // Float32Array para enviar ao shader  
+    colorUniformLocation: null,         // localização do uniforme no shader
+    elapsedTime: 0,                     // tempo acumulado para a animação
 }
 
 export function setupWebGL() {
@@ -34,14 +36,15 @@ export function initialize(gl) {
       createShader(gl, 'fs', gl.FRAGMENT_SHADER, fragmentShaderCode)
     );
     
-    // define os vértices de um triângulo
+    // define os vértices de um quadrado
     const vertices = new Float32Array([
-      0.0,  0.5,   // topo
-      -0.5, -0.5,  // esquerda
-      0.5, -0.5    // direita
+        20, 20,
+        80, 20,
+        80, 80,
+        20, 80
     ]);
     
-    // cria um VAO para as configurações do triângulo e um Buffer com vértices
+    // cria um VAO para as configurações do quadrado e um Buffer com vértices
     // gl.bufferData(...): move os dados dos vértices: RAM -> VRAM (GPU)
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
@@ -55,22 +58,29 @@ export function initialize(gl) {
     gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(positionAttributeLocation);
 
+
+    console.dir(getDeclaredUniforms(gl, program))    
     // armazena a localização do uniforme de cor no estado e 
     // inicializa com a cor inicial
     state.colorUniformLocation = gl.getUniformLocation(program, 'currentColor');
     state.currentColor = new Float32Array(state.colorBegin);
-    gl.uniform3fv(state.colorUniformLocation, state.currentColor);
-
+    
+    // uniform da projeção
+    const projectionUniformLocation = gl.getUniformLocation(program, 'projection');
+    const projectionMatrix = ortho(0, 100, 0, 100, -1, 1);
+    
     // inicia o estado do WebGL: cor de fundo e programa ativo
     gl.clearColor(1.0, 1.0, 1.0, 1.0); // fundo branco
     gl.useProgram(program);
+    gl.uniform3fv(state.colorUniformLocation, state.currentColor);
+    gl.uniformMatrix4fv(projectionUniformLocation, false, projectionMatrix);
 }
 
 export function render(gl) {
-    // renderiza: desenha o VAO que estava ativado: o do triângulo
+    // renderiza: desenha o VAO que estava ativado: o do quadrado
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform3fv(state.colorUniformLocation, state.currentColor);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 }
 
 export function update(dt) {

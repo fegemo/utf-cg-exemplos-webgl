@@ -9,7 +9,7 @@
 </head>
 <body>
   <h1>Animação de Cor</h1>
-  <p>Desenha um triângulo com cor animada, 
+  <p>Desenha um quadrado com cor animada, 
     entre <input type="color" value="#00ff00" id="color-begin" data-bind-value="state.colorBegin"> verde e 
     <input type="color" value="#0000ff" id="color-end" data-bind-value="state.colorEnd"> azul.
   </p>
@@ -18,9 +18,10 @@
     #version 300 es
 
     in vec2 position;
+    uniform mat4 projection;
 
     void main() {
-        gl_Position = vec4(position, 0.0, 1.0);
+        gl_Position = projection * vec4(position, 0.0, 1.0);
     }
   </script>
   <script type="shader/fragment">
