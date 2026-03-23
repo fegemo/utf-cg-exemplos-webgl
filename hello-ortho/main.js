@@ -26,7 +26,6 @@ export function initialize(gl) {
       createShader(gl, 'fs', gl.FRAGMENT_SHADER, fragmentShaderCode)
     );
     gl.useProgram(program);
-    gl.program = program
     
     // define os vértices de um quadrado
     const vertices = new Float32Array([

@@ -12,3 +12,12 @@ export function ortho(left, right, bottom, top, near, far) {
     tx, ty, tz,           1
   ])
 }
+
+export function scale(scaleX, scaleY, scaleZ) {
+  return new Float32Array([
+    scaleX, 0,      0,      0,
+    0,      scaleY, 0,      0,
+    0,      0,      scaleZ, 0,
+    0,      0,      0,      1
+  ])
+}
