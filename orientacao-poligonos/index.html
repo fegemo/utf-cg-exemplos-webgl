@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo: Orientação de Polígonos</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <script src="../utils/code/errors.js"></script>
+</head>
+<body>
+  <h1>Orientação de Polígonos</h1>
+  <p>
+    Desenha quadrado que fica girando pelo eixo X, para ilustrar que os
+    <strong>polígonos têm uma orientação definida</strong>: 
+    um lado da frente e um lado de trás.
+  </p>
+  <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+  <details>
+    <summary>Mais detalhes</summary>
+    <div class="instructions">
+      <p>
+        Na verdade, neste exemplo, ativamos o 
+        <strong>descarte de faces traseiras</strong> (back-face culling), 
+        ou seja, as faces que estiverem voltadas para trás não serão desenhadas.
+        Assim, o quadrado só é visível quando a face da frente estiver voltada 
+        para a câmera.
+      </p>
+      <p>
+        Para ajudar a visualizar isso, desenhamos a face de trás 
+        usando linhas (LINE_LOOP) e a face da frente usando triângulos 
+        (TRIANGLE_FAN). Portanto, na função de renderização, 
+        desenhamos o quadrado duas vezes.
+      </p>
+    </div>
+  </details>
+  <script type="shader/vertex">
+    #version 300 es
+
+    in vec3 position;
+    uniform mat4 projection;
+    uniform mat4 model;
+
+    void main() {
+        gl_Position = projection * model * vec4(position, 1.0);
+    }
+  </script>
+  <script type="shader/fragment">
+    #version 300 es
+
+    precision mediump float;
+    out vec4 outColor;
+
+    void main() {
+        outColor = vec4(0.0, 1.0, 0.0, 1.0); // verde
+    }
+  </script>
+  <script type="module">
+    import { setupWebGL, initialize, render, update } from './main.js';
+    
+    const gl = setupWebGL()
+    initialize(gl)
+
+    function mainLoop(currentTime) {
+      const deltaTime = (currentTime - (mainLoop.lastTime ?? 0)) / 1000
+      mainLoop.lastTime = currentTime
+    
+      update(deltaTime)
+      render(gl)
+
+      requestAnimationFrame(mainLoop)
+    }
+    requestAnimationFrame(mainLoop)
+
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+
+  createSourceViewer([
+    { language: 'html', name: 'index.html', path: './index.html' },
+    { language: 'javascript', name: 'main.js', path: './main.js' },
+    { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' },
+    { language: 'glsl', name: 'vertex-shader', code: document.querySelector('[type="shader/vertex"]').textContent },
+    { language: 'glsl', name: 'fragment-shader', code: document.querySelector('[type="shader/fragment"]').textContent },
+  ]);
+</script>

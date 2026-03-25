@@ -60,10 +60,6 @@ export async function initialize(gl, shaderName) {
     gl.vertexAttribPointer(texcoordAttributeLocation, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(texcoordAttributeLocation);
 
-    // ℹ️ cria a textura, ativa o slot 0 e pega a localização 
-    // da uniform 'u_texture' do shader, para definir que vai usar a do slot 0
-    const texture = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0);
     const textureUniformLocation = gl.getUniformLocation(program, 'u_texture');
 
     // ℹ️ carrega a imagem da textura e a move para a VRAM (GPU), configurando
@@ -79,13 +75,16 @@ export async function initialize(gl, shaderName) {
         image.onerror = (err) => reject(err)
         image.src = 'pusheen-noodles.png'
     }).then((image) => {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        // ℹ️ cria a textura, ativa o slot 0 e pega a localização 
+        // da uniform 'u_texture' do shader, para definir que vai usar a do slot 0
+        const texture = gl.createTexture()
+        gl.bindTexture(gl.TEXTURE_2D, texture)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
         
-        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.generateMipmap(gl.TEXTURE_2D)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, 
-            gl.LINEAR_MIPMAP_LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.LINEAR_MIPMAP_LINEAR)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
     })
 
 
