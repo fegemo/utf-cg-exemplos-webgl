@@ -1,4 +1,3 @@
-import { getDeclaredUniforms } from '../utils/code/debug-utils.js';
 import { createProgram, createShader } from '../utils/code/gl-utils.js';
 import { ortho } from '../utils/code/math-utils.js';
 
@@ -59,7 +58,6 @@ export function initialize(gl) {
     gl.enableVertexAttribArray(positionAttributeLocation);
 
 
-    console.dir(getDeclaredUniforms(gl, program))    
     // armazena a localização do uniforme de cor no estado e 
     // inicializa com a cor inicial
     state.colorUniformLocation = gl.getUniformLocation(program, 'currentColor');

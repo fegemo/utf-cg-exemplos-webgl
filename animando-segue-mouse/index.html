@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exemplo: Animação Seguindo Mouse</title>
+  <link rel="stylesheet" href="../utils/styling/example.css">
+  <script src="../utils/code/errors.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Animação Seguindo Mouse</h1>
+    <p>Desenha um quadrado que fica seguindo o mouse com certo atraso.
+    </p>
+    <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+    <details>
+      <summary>Instruções</summary>
+      <div class="instructions">
+        <dl class="controls-instructions">
+          <dt><kbd>Space</kbd></dt>
+          <dd>Ativa/desativa movimento suave</dd>
+        </dl>
+      </div>
+    </details>
+  </main>
+  <script type="shader/vertex">
+    #version 300 es
+    
+    in vec3 position;
+    uniform mat4 projection;
+    uniform vec3 offset;
+    
+    void main() {
+      gl_Position = projection * vec4(position + offset, 1.0);
+    }
+  </script>
+  <script type="shader/fragment">
+    #version 300 es
+    
+    precision mediump float;
+    
+    out vec4 outColor;
+    
+    void main() {
+      outColor = vec4(1.0, 0.52, 0.52, 1.0);
+    }
+  </script>
+  <script id="entry" type="module">
+    import { setupWebGL, initialize, render, update } from './main.js';
+    
+    const gl = setupWebGL();
+    initialize(gl);
+    
+    let lastTime = 0;
+    function mainLoop(currentTime) {
+      // (0) descobre o tempo decorrido desde o último frame (deltaTime)
+      const deltaTime = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+      
+      // (1) atualiza o estado da aplicação (jogo, animação etc.)
+      update(deltaTime);
+      
+      // (2) renderiza a cena sob o estado atual
+      render(gl);
+      
+      // registra o próximo frame para ser executado o mais rápido possível
+      requestAnimationFrame(mainLoop);
+    }
+    requestAnimationFrame(mainLoop);
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ℹ️ necessário apenas para o exemplo, e não para uma aplicação real: -->
+<!-- conecta a interface de controle (html) com o state da aplicação (js) -->
+<script type="module">
+  import { registerBindingContext } from '../utils/code/data-binding.js';
+  import { state as appState } from './main.js';
+  registerBindingContext('state', appState);
+</script>
+
+<!-- inserido apenas para mostrar o código fonte :P -->
+<script type="module">
+  import createSourceViewer from '../utils/code/source-viewer.js';
+  
+  createSourceViewer([
+  { language: 'javascript', name: 'main.js', path: './main.js' },
+  { language: 'html', name: 'index.html (trecho)', code: document.querySelector('#entry').outerHTML },
+  { language: 'javascript', name: 'gl-utils.js', path: '../utils/code/gl-utils.js' },
+  { language: 'glsl', name: 'vertex-shader', code: document.querySelector('[type="shader/vertex"]').textContent },
+  { language: 'glsl', name: 'fragment-shader', code: document.querySelector('[type="shader/fragment"]').textContent },
+  ]);
+</script>
