@@ -6,7 +6,8 @@ import { createRenderer, loadFont } from 'https://cdn.jsdelivr.net/npm/webgl-fon
 const state = {
     text: 'The quick brown fox jumps over the lazy dog.',   
     font: null,
-    fontPath: '../utils/sdf-fonts/roboto',
+    fontPath: '../utils/sdf-fonts/liberation-sans',
+    backgroundColor: [1, 1, 1, 1],
 }
 
 // cache simples para fontes carregadas, para não precisar
@@ -19,11 +20,19 @@ let textRenderer = null
 export function setupWebGL() {
     const canvas = document.querySelector('.example-canvas');
     const gl = canvas.getContext('webgl2');
-    
+    const dppx = window.devicePixelRatio;
+    const width = 500 * dppx;
+    const height = 500 * dppx;
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = `${width / dppx}px`;
+    canvas.style.height = `${height / dppx}px`;
+    canvas.style.aspectRatio = 'unset';
     if (!gl) {
-      console.error('WebGL2 não está disponível');
-      throw new Error('WebGL2 não suportado');
+        console.error('WebGL2 não está disponível');
+        throw new Error('WebGL2 não suportado');
     }
+    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     return gl
 }
@@ -48,7 +57,7 @@ export async function initialize(gl) {
     await setFont(gl, state.fontPath);
     textRenderer = createRenderer(gl);
 
-    gl.clearColor(1.0, 1.0, 1.0, 1.0); // fundo branco
+    gl.clearColor(...state.backgroundColor);
 }
 
 export function render(gl) {
@@ -58,14 +67,27 @@ export function render(gl) {
     // invoca o textRenderer para desenhar o texto na tela
     textRenderer.render({
         font: state.font,
-        fontSize: 16,
+        fontSize: 30,
         text: state.text,
         translateX: 0,
         translateY: 0,  // esta lib usa (0,0) no canto superior esquerdo
         fontHinting: true,
         subpixel: true,
         fontColor: [0, 0, 0, 1],
-        backgroundColor: [1, 1, 1, 0],
+        backgroundColor: state.backgroundColor,
+    })
+
+    // invoca de novo
+    textRenderer.render({
+        font: state.font,
+        fontSize: 12,
+        text: 'Acentos funcionam... Será? Não tenho certeza...',
+        translateX: 20,
+        translateY: 90,
+        fontHinting: true,
+        subpixel: true,
+        fontColor: [0.4, 0.7, 0.24, 1],
+        backgroundColor: state.backgroundColor
     })
 
     // invoca de novo
@@ -74,10 +96,10 @@ export function render(gl) {
         fontSize: 12,
         text: 'WebGL Fonts!',
         translateX: 0,
-        translateY: 100,
+        translateY: 140,
         fontHinting: true,
         subpixel: true,
         fontColor: [0.2, 0.4, 0.8, 1],
-        backgroundColor: [1, 1, 1, 0],
+        backgroundColor: state.backgroundColor,
     })
 }

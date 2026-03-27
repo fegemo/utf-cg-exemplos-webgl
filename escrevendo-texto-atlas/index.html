@@ -14,13 +14,14 @@
       Usa a biblioteca <a href="https://github.com/mate-h/webgl-fonts" target="_blank">WebGL-fonts</a> para escrever texto na tela
       usando glifos em um atlas renderizados com WebGL.
     </p>
-    <canvas class="example-canvas shadow" width="500" height="500"></canvas>
+    <canvas class="example-canvas shadow" width="500" height="500" style="aspect-ratio: unset;"></canvas>
     <details>
       <summary>Instruções</summary>
       <div class="instructions">
         <div class="input-controls">
           <label for="input-font">Fonte usada:</label>
           <select id="input-font">
+            <option value="../utils/sdf-fonts/liberation-sans" selected>Liberation Sans</option>
             <option value="../utils/sdf-fonts/roboto">Roboto</option>
             <option value="../utils/sdf-fonts/ubuntu">Ubuntu</option>
             <option value="../utils/sdf-fonts/dejavu-serif">DejaVu Serif</option>
@@ -36,7 +37,7 @@
           (com as métricas dos glifos). Para transformar um arquivo .ttf
           (TrueType Font) nos arquivos .png e .json esperados pela
           biblioteca, você pode usar a ferramenta 
-          <a href="https://github.com/astiopin/sdf_atlas" target="_blank">sdf_atlas</a>.
+          <a href="https://github.com/fegemo/sdf-atlas" target="_blank">sdf_atlas</a>.
         </p>
       </div>
     </details>
@@ -50,9 +51,8 @@
     // ℹ️ neste exemplo, como não há animação, não precisamos de um
     // game/mainLoop... apenas renderizamos uma vez ou quando o usuário
     // escolher outra fonte
-    requestAnimationFrame(() => {
-      render(gl);
-    });
+    console.log('Renderizando cena...');
+    render(gl);
 
     // ℹ️ registra evento que permite trocar a fonte usada
     const fontSelect = document.getElementById('input-font');
