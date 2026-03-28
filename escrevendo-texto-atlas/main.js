@@ -6,7 +6,7 @@ import { createRenderer, loadFont } from 'https://cdn.jsdelivr.net/npm/webgl-fon
 const state = {
     text: 'The quick brown fox jumps over the lazy dog.',   
     font: null,
-    fontPath: '../utils/sdf-fonts/liberation-sans',
+    fontPath: 'liberation-sans',
     backgroundColor: [1, 1, 1, 1],
 }
 
@@ -46,7 +46,7 @@ export async function setFont(gl, fontPath) {
         return
     }
     console.info(`Carregando a fonte ${fontPath}...`)
-    state.font = await loadFont(gl, fontPath)
+    state.font = await loadFont(gl, fontPath, '../utils/sdf-fonts')
     console.info(`Fonte ${fontPath} carregada.`)
     fontCache[fontPath] = state.font
 }
@@ -81,7 +81,7 @@ export function render(gl) {
     textRenderer.render({
         font: state.font,
         fontSize: 12,
-        text: 'Acentos funcionam... Será? Não tenho certeza...',
+        text: 'Acentos funcionam... Será? Depende da fonte ;)...',
         translateX: 20,
         translateY: 90,
         fontHinting: true,
