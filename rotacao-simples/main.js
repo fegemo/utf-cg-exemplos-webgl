@@ -1,13 +1,13 @@
 import { createProgram, createShader } from '../utils/code/gl-utils.js';
-import { mat3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.4/+esm';
+import { mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.4/+esm';
 
 const TWO_PI = Math.PI * 2;
 
 const state = {
   angle: 0, // angulo em radianos
   speed: Math.PI / 2, // velocidade angular em rad/s
-  transformLocation: null,
-  transform: mat3.create()
+  modelLoc: null,
+  model: mat4.create()
 };
 
 export function setupWebGL() {
@@ -44,11 +44,11 @@ export function initialize(gl) {
   gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
   gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-  const positionAttributeLocation = gl.getAttribLocation(program, 'position');
+  const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
   gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(positionAttributeLocation);
 
-  state.transformLocation = gl.getUniformLocation(program, 'transform');
+  state.modelLoc = gl.getUniformLocation(program, 'u_model');
 
   gl.clearColor(1.0, 1.0, 1.0, 1.0);
 }
@@ -62,12 +62,12 @@ export function update(dt) {
   } else if (state.angle < 0) {
     state.angle += TWO_PI;
   }
-  mat3.fromRotation(state.transform, state.angle);
+  mat4.fromRotation(state.model, state.angle, [0, 0, 1]);
 }
 
 export function render(gl) {
   gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.uniformMatrix3fv(state.transformLocation, false, state.transform);
+  gl.uniformMatrix4fv(state.modelLoc, false, state.model);
   gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 }
 

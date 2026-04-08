@@ -42,15 +42,14 @@
   <script type="shader/vertex">
     #version 300 es
 
-    in vec2 position;
+    in vec2 a_position;
 
-    // ℹ️ uma uniform mat3 contendo a rotação
-    uniform mat3 transform;
+    // ℹ️ uma uniform mat4 contendo uma transformação
+    uniform mat4 u_model;
 
     void main() {
         // ℹ️ a posição é multiplicada pela rotação
-        vec3 newPosition = transform * vec3(position, 1.0);
-        gl_Position = vec4(newPosition, 1.0);
+        gl_Position = u_model * vec4(a_position, 0.0, 1.0);
     }
   </script>
 

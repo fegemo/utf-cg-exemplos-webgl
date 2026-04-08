@@ -1,25 +1,25 @@
 import { createProgram, createShader } from '../utils/code/gl-utils.js';
-import { mat3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.4/+esm';
+import { mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.4/+esm';
 
 const state = {
     t: 0,
     autoIncrementT: false,
-    transformLocation: null,
+    modelLoc: null,
     objects: [
         {
             // quadrado 1: vai variar sua ESCALA
             name: 'square1',
-            transform: mat3.create()  // matriz identidade
+            model: mat4.create()  // matriz identidade
         },
         {
             // quadrado 2: vai variar sua ROTAÇÃO
             name: 'square2',
-            transform: mat3.create()  // matriz identidade
+            model: mat4.create()  // matriz identidade
         },
         {
             // quadrado 3: vai variar sua TRANSLADAÇÃO
             name: 'square3',
-            transform: mat3.create()  // matriz identidade
+            model: mat4.create()  // matriz identidade
         }
     ],
     // armazena o estado de pressionamento das teclas (true = pressionada)
@@ -81,9 +81,11 @@ export function initialize(gl) {
     gl.enableVertexAttribArray(0);
 
     // armazena a localização do uniforme de transformação no estado
-    state.transformLocation = gl.getUniformLocation(program, 'transform'); 
+    state.modelLoc = gl.getUniformLocation(program, 'u_model'); 
+    const projectionLoc = gl.getUniformLocation(program, 'u_projection');
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0); // fundo branco
+    gl.uniformMatrix4fv(projectionLoc, false, mat4.ortho(mat4.create(), -1, 1, -1, 1, -1, 1));
 
     // inicializa os manipuladores de eventos para teclado para:
     // - setas para cima/baixo: incrementam/decrementam t
@@ -96,7 +98,6 @@ export function initialize(gl) {
                 // previne comportamento padrão da tecla para, por exemplo,
                 // evitar que a página role para cima/baixo ao pressionar setas
                 e.preventDefault(); 
-
             }
             
             if (e.code === 'Space' && nameOfEvent === 'keydown') {
@@ -114,13 +115,13 @@ export function render(gl) {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // desenha o primeiro quadrado à esquerda (ilustra escala)
-    gl.uniformMatrix3fv(state.transformLocation, false, state.objects[0].transform);
+    gl.uniformMatrix4fv(state.modelLoc, false, state.objects[0].model);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     // desenha o segundo quadrado ao meio (ilustra rotação)
-    gl.uniformMatrix3fv(state.transformLocation, false, state.objects[1].transform);
+    gl.uniformMatrix4fv(state.modelLoc, false, state.objects[1].model);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
     // desenha o terceiro quadrado à direita (ilustra translação)
-    gl.uniformMatrix3fv(state.transformLocation, false, state.objects[2].transform);
+    gl.uniformMatrix4fv(state.modelLoc, false, state.objects[2].model);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 }
 
@@ -152,23 +153,23 @@ export function update(dt) {
             const scale = 1.0 + state.t;
             
             // move sistema de coordenadas para esquerda, depois aplica escala
-            mat3.identity(obj.transform);
-            mat3.translate(obj.transform, obj.transform, [-0.5, 0.0]);
-            mat3.scale(obj.transform, obj.transform, [scale, scale]);
+            mat4.identity(obj.model);
+            mat4.translate(obj.model, obj.model, [-0.5, 0, 0]);
+            mat4.scale(obj.model, obj.model, [scale, scale, 1]);
 
         } else if (obj.name === 'square2') {
             // square2: rotação entre 0 e 2π
             const angle = state.t * 2 * Math.PI;
-            mat3.fromRotation(obj.transform, angle);
+            mat4.fromRotation(obj.model, angle, [0, 0, 1]);
 
         } else if (obj.name === 'square3') {
             // square3: translação entre 0 e 0.5 no eixo Y
             const ty = state.t * 0.5;
             
             // move sistema de coordenadas para direita, depois na vertical
-            mat3.identity(obj.transform);
-            mat3.translate(obj.transform, obj.transform, [0.5, 0]);
-            mat3.translate(obj.transform, obj.transform, [0, ty]);
+            mat4.identity(obj.model);
+            mat4.translate(obj.model, obj.model, [0.5, 0, 0]);
+            mat4.translate(obj.model, obj.model, [0, ty, 0]);
         }
     });
 }

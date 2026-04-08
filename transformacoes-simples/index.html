@@ -46,14 +46,16 @@
     #version 300 es
 
     layout(location = 0)
-    in vec2 position;
+    in vec2 a_position;
+    uniform mat4 u_projection;
     //ℹ️ a uniform contendo a matriz de transformação
-    uniform mat3 transform;
+    uniform mat4 u_model;
 
     void main() {
         //ℹ️ aplica a transformação ao vértice, achando suas novas coordenadas
-        vec3 newPosition = transform * vec3(position, 1.0);
-        gl_Position = vec4(newPosition, 1.0);
+        vec4 positionInWorld = u_model * vec4(a_position, 0.0, 1.0);
+        vec4 positionInClipSpace = u_projection * positionInWorld;
+        gl_Position = positionInClipSpace;
     }
   </script>
   <script type="shader/fragment">
