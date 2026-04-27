@@ -18,8 +18,8 @@ export function perspective(fovInRadians, aspect, near, far) {
   const rangeInv = 1 / (near - far)
 
   return new Float32Array([
-    f / aspect, 0, 0,                             0,
-    0,          f, 0,                             0,
+    f / aspect, 0, 0,                           0,
+    0,          f, 0,                           0,
     0,          0, (near + far) * rangeInv,    -1,
     0,          0, near * far * rangeInv * 2,   0
   ])
@@ -70,11 +70,20 @@ export function rotateX(angleInRadians) {
   ])
 }
 
-export function translate(tx, ty, tz) {
+export function identity() {
   return new Float32Array([
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
+    0, 0, 0, 1
+  ])
+}
+
+export function translate(tx, ty, tz) {
+  return new Float32Array([
+     1,  0,  0, 0,
+     0,  1,  0, 0,
+     0,  0,  1, 0,
     tx, ty, tz, 1
   ])
 }

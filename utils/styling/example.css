@@ -96,6 +96,16 @@ main {
     }
 }
 
+select {
+    font-family: inherit;
+    padding: 0.1em 0.25em;
+    background-color: #f8f8f8;
+    font-size: inherit;
+    border-radius: 5px;
+    border: 1px solid silver;
+    color: cornflowerblue;
+}
+
 kbd {
     display: inline-block;
     min-width: 2.0ch;
