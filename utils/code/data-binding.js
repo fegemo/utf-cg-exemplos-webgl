@@ -12,19 +12,14 @@ export function bindProperty(obj, prop, inputEl, options = {}) {
 	// If the property is not configurable or already has an accessor, fallback to polling sync
 	const desc = Object.getOwnPropertyDescriptor(obj, prop);
 	if (desc && (!desc.configurable || desc.get || desc.set)) {
-		// polling fallback: keep input in sync with obj[prop]
+		// non-configurable or accessor property: bind user input -> property only
 		inputEl.value = format(obj[prop]);
-		inputEl.addEventListener('input', () => {
+		const onInput = () => {
 			const v = parse(inputEl.value);
 			try { obj[prop] = v; } catch (e) { /* ignore write errors */ }
-		});
-		let rafId = null;
-		const tick = () => {
-			inputEl.value = format(obj[prop]);
-			rafId = requestAnimationFrame(tick);
 		};
-		rafId = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(rafId);
+		inputEl.addEventListener('input', onInput);
+		return () => inputEl.removeEventListener('input', onInput);
 	}
 	
 	// Replace the property with an accessor that updates the input element when changed
@@ -63,6 +58,7 @@ export function bindProperty(obj, prop, inputEl, options = {}) {
 
 const contexts = new Map(); // name -> object registered by the app
 const unbinders = new WeakMap(); // element -> unbind function
+const optionsBound = new WeakSet(); // elements with data-bind-options already processed
 let domReady = document.readyState !== 'loading';
 
 
@@ -284,10 +280,179 @@ function bindElementValue(el) {
 	unbinders.set(el, unbind);
 }
 
+// Usage: <select data-bind-options="state.items" data-bind-option-value="id" data-bind-option-content="label">
+// Generates <option> elements from an array. `data-bind-option-value` names the property used
+// as the option's value attribute; the special token `$` uses the item's index instead.
+// `data-bind-option-content` names the property used for the option's text content; if omitted,
+// String(item) is used. Re-generates options without polling when the array property is replaced.
+function bindElementOptions(el) {
+	const arrayPath = el.getAttribute('data-bind-options');
+	if (!arrayPath || optionsBound.has(el)) return;
+
+	const valueHint = el.getAttribute('data-bind-option-value') ?? '$';
+	const contentProp = el.getAttribute('data-bind-option-content') ?? null;
+
+	const resolved = resolvePath(arrayPath);
+	if (!resolved) {
+		console.warn(`[data-binding] Could not resolve options path: ${arrayPath}`);
+		return;
+	}
+
+	const { target, prop } = resolved;
+
+	function generateOptions(arr) {
+		el.innerHTML = '';
+		if (!Array.isArray(arr)) return;
+		for (let i = 0; i < arr.length; i++) {
+			const item = arr[i];
+			const opt = document.createElement('option');
+			opt.value = valueHint === '$' ? String(i) : String(item?.[valueHint] ?? i);
+			opt.textContent = contentProp != null
+				? String(item?.[contentProp] ?? item)
+				: String(item);
+			el.appendChild(opt);
+		}
+	}
+
+	let internal = target[prop];
+	generateOptions(internal);
+	optionsBound.add(el);
+
+	// Use an accessor so options are regenerated if the array reference is replaced
+	const desc = Object.getOwnPropertyDescriptor(target, prop);
+	if (desc && (!desc.configurable || desc.get || desc.set)) return;
+	try {
+		Object.defineProperty(target, prop, {
+			configurable: true,
+			enumerable: true,
+			get() { return internal; },
+			set(v) {
+				internal = v;
+				generateOptions(v);
+			}
+		});
+	} catch (e) {
+		// cannot wrap property — options won't update on reassignment
+	}
+}
+
+// Simple two-way binding for existing <select> elements.
+// Usage: <select data-bind-select="state.prop">...</select>
+// Behavior: when the select changes, the bound property is set to the
+// selected option's value (attempts JSON.parse, falls back to string).
+// When the bound property changes, the select's value is updated.
+function bindElementSelect(el) {
+	const path = el.getAttribute('data-bind-select');
+	if (!path || unbinders.has(el)) return;
+	const resolved = resolvePath(path);
+	if (!resolved) {
+		console.warn(`[data-binding] Could not resolve select path: ${path}`);
+		return;
+	}
+	// prefer accessor-based sync to avoid polling: try to replace the
+	// property with a getter/setter that updates the select when changed.
+	const parse = pickParser(el);
+	const format = pickFormatter(el);
+
+	let internal = resolved.target[resolved.prop];
+	try {
+		Object.defineProperty(resolved.target, resolved.prop, {
+			configurable: true,
+			enumerable: true,
+			get() { return internal; },
+			set(v) {
+				internal = v;
+				try { el.value = format(v); } catch { el.value = String(v); }
+			}
+		});
+	} catch (e) {
+		// cannot redefine the property: bind user changes only (no polling)
+		el.value = format(internal);
+		const onChange = () => {
+			const opt = el.options[el.selectedIndex];
+			if (!opt) return;
+			const parsed = parse(opt.value);
+			try { resolved.target[resolved.prop] = parsed; } catch (e) { /* ignore */ }
+		};
+		el.addEventListener('change', onChange);
+		unbinders.set(el, () => { el.removeEventListener('change', onChange); unbinders.delete(el); });
+		return;
+	}
+
+	// initialize select value from current property
+	try { el.value = format(internal); } catch { el.value = String(internal); }
+
+	// when user selects, parse and write back to the property
+	const onChange = () => {
+		const opt = el.options[el.selectedIndex];
+		if (!opt) return;
+		const parsed = parse(opt.value);
+		try { resolved.target[resolved.prop] = parsed; } catch (e) { /* ignore write errors */ }
+	};
+	el.addEventListener('change', onChange);
+
+	unbinders.set(el, () => { el.removeEventListener('change', onChange); unbinders.delete(el); });
+}
+
+// Usage: <input type="checkbox" data-bind-checked="state.flag">
+// Binds an input's `checked` (boolean) to a property on a registered context.
+// No polling: uses a property accessor when possible, otherwise listens to change events.
+function bindElementChecked(el) {
+	const path = el.getAttribute('data-bind-checked');
+	if (!path || unbinders.has(el)) return;
+	const resolved = resolvePath(path);
+	if (!resolved) {
+		console.warn(`[data-binding] Could not resolve path: ${path}`);
+		return;
+	}
+
+	const { target, prop } = resolved;
+
+	// initialize internal value
+	let internal = target[prop];
+	try {
+		Object.defineProperty(target, prop, {
+			configurable: true,
+			enumerable: true,
+			get() { return internal; },
+			set(v) {
+				internal = v;
+				try { el.checked = Boolean(v); } catch (e) { /* ignore DOM write errors */ }
+			}
+		});
+	} catch (e) {
+		// cannot redefine property: fallback to listen-only binding
+		try { el.checked = Boolean(internal); } catch (_) {}
+		const onChange = () => {
+			try { target[prop] = el.checked; } catch (e) { /* ignore write errors */ }
+		};
+		el.addEventListener('change', onChange);
+		unbinders.set(el, () => { el.removeEventListener('change', onChange); unbinders.delete(el); });
+		return;
+	}
+
+	// initialize element from current value
+	try { el.checked = Boolean(internal); } catch (e) { /* ignore */ }
+
+	// when user toggles the checkbox, write back to the property
+	const onChange = () => {
+		try { target[prop] = el.checked; } catch (e) { /* ignore write errors */ }
+	};
+	el.addEventListener('change', onChange);
+	unbinders.set(el, () => { el.removeEventListener('change', onChange); unbinders.delete(el); });
+}
+
 export function applyDeclarativeBindings() {
+	// generate options before binding select values so options exist when value is initialized
+	document.querySelectorAll('[data-bind-options]').forEach(bindElementOptions);
+	// lightweight select binding: two-way bind select's selected value
+	document.querySelectorAll('[data-bind-select]').forEach(bindElementSelect);
+	// regular value bindings
 	document.querySelectorAll('[data-bind-value]').forEach(bindElementValue);
 	document.querySelectorAll('[data-bind-text]').forEach(bindElementText);
 	document.querySelectorAll('[data-bind-class]').forEach(bindElementClass);
+	// checkbox checked bindings
+	document.querySelectorAll('[data-bind-checked]').forEach(bindElementChecked);
 }
 
 export function registerBindingContext(name, obj) {
